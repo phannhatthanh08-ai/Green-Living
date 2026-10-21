@@ -1,0 +1,9 @@
+{
+  "name": "green-living-clash",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Green Living · 3-Bin Tug of War Clash",
+  "scripts": {
+    "start": "npx serve ."
+  }
+}

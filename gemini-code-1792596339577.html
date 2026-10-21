@@ -1,0 +1,2582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Green Living · 3-Bin Tug of War Clash</title>
+  <!-- Google Fonts: Fraunces + JetBrains Mono + Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,600&family=JetBrains+Mono:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Canvas Confetti & QRCode.js -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Real-time Cross-Device Multi-Player Cloud Sync -->
+  <script src="https://cdn.jsdelivr.net/npm/mqtt@5.5.0/dist/mqtt.min.js"></script>
+
+  <style>
+    :root {
+      --paper-cream: #F5F2EA;
+      --paper-card: #FFFFFF;
+      --paper-border: #DCD6C5;
+      --ink-forest: #19271D;
+      --ink-muted: #56675B;
+
+      /* Standard 3-Bin Colors */
+      --bin-organic: #246B35;
+      --bin-organic-dark: #194F26;
+      --bin-organic-light: #E7F3E9;
+      --bin-recycle: #BA5D18;
+      --bin-recycle-dark: #8F430C;
+      --bin-recycle-light: #FBEFE4;
+      --bin-other: #485764;
+      --bin-other-dark: #313D47;
+      --bin-other-light: #EBF0F4;
+
+      /* 2 Tug of War Teams */
+      --team-sprout: #226D3B;
+      --team-sprout-soft: #D7ECD9;
+      --team-amber: #BA5A1A;
+      --team-amber-soft: #F9E5D4;
+
+      --danger-alert: #C53030;
+      --gold-accent: #D97706;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--paper-cream);
+      background-image: 
+        radial-gradient(#D3CCA8 0.75px, transparent 0.75px),
+        radial-gradient(#D3CCA8 0.75px, var(--paper-cream) 0.75px);
+      background-size: 26px 26px;
+      background-position: 0 0, 13px 13px;
+      color: var(--ink-forest);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .font-serif { font-family: 'Fraunces', serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    .kraft-card {
+      background: var(--paper-card);
+      border: 1.5px solid var(--paper-border);
+      border-radius: 22px;
+      box-shadow: 0 6px 20px rgba(25, 39, 29, 0.05);
+      position: relative;
+    }
+
+    /* Top Navigation Header */
+    .top-header {
+      height: 68px;
+      padding: 0 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1.5px solid var(--paper-border);
+      background: rgba(245, 242, 234, 0.96);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+    }
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .brand-leaf-badge {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: var(--team-sprout-soft);
+      color: var(--team-sprout);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+    }
+    .brand-text-title {
+      font-family: 'Fraunces', serif;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .screen-view {
+      display: none;
+      width: 100%;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .btn-eco {
+      width: 100%;
+      padding: 14px 22px;
+      border-radius: 14px;
+      border: none;
+      font-weight: 800;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.15s ease;
+    }
+    .btn-eco:hover { filter: brightness(0.96); transform: translateY(-1px); }
+    .btn-eco:active { transform: translateY(1px); }
+    .btn-eco-green {
+      background: var(--team-sprout);
+      color: #FFF;
+      box-shadow: 0 4px 14px rgba(34, 109, 59, 0.25);
+    }
+
+    /* Player PIN Screen */
+    .portal-shell {
+      max-width: 480px;
+      margin: auto;
+      padding: 36px 20px;
+      width: 100%;
+      text-align: center;
+    }
+    .pin-input-field {
+      width: 100%;
+      background: #FAF8F2;
+      border: 2px solid var(--paper-border);
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      text-align: center;
+      color: var(--ink-forest);
+      outline: none;
+      margin-bottom: 16px;
+    }
+    .pin-input-field:focus {
+      border-color: var(--team-sprout);
+      background: #FFF;
+      box-shadow: 0 0 0 4px var(--team-sprout-soft);
+    }
+
+    /* Referee Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(25, 39, 29, 0.75);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      padding: 20px;
+    }
+    .referee-box-card {
+      max-width: 420px;
+      width: 100%;
+      padding: 32px 28px;
+      text-align: center;
+    }
+
+    /* Lobby */
+    .lobby-header-bar {
+      min-height: 80px;
+      background: #FFF;
+      border-bottom: 1.5px solid var(--paper-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 36px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .lobby-stage-layout {
+      flex: 1;
+      padding: 24px 36px;
+      display: grid;
+      grid-template-columns: 310px 1fr 1fr;
+      gap: 24px;
+    }
+    .roster-column-kraft {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      border-top: 5px solid transparent;
+    }
+    .roster-column-kraft.sprout { border-color: var(--team-sprout); }
+    .roster-column-kraft.amber { border-color: var(--team-amber); }
+    .members-grid-box {
+      flex: 1;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+      align-content: flex-start;
+      margin-top: 16px;
+    }
+    .member-botanical-chip {
+      background: var(--paper-cream);
+      border: 1px solid var(--paper-border);
+      border-radius: 14px;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      text-align: center;
+      animation: popZoom 0.2s ease;
+    }
+
+    /* Duration Selector */
+    .duration-selector-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--paper-cream);
+      padding: 6px 14px;
+      border-radius: 14px;
+      border: 1.5px solid var(--paper-border);
+    }
+    .time-chip-btn {
+      border: 1px solid var(--paper-border);
+      background: #FFF;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--ink-forest);
+      transition: all 0.15s ease;
+    }
+    .time-chip-btn.active {
+      background: var(--team-sprout);
+      color: #FFF;
+      border-color: var(--team-sprout);
+    }
+
+    /* Player Profile Setup */
+    .player-waiting-wrap {
+      max-width: 540px;
+      margin: auto;
+      padding: 24px 16px;
+      width: 100%;
+    }
+    .avatar-grid-select {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin: 12px 0 20px 0;
+      max-height: 240px;
+      overflow-y: auto;
+      padding: 4px;
+    }
+    .avatar-pick-btn {
+      background: #FFF;
+      border: 1.5px solid var(--paper-border);
+      border-radius: 14px;
+      font-size: 24px;
+      padding: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .avatar-pick-btn:hover {
+      transform: scale(1.08);
+      border-color: var(--team-sprout);
+    }
+    .avatar-pick-btn.active {
+      border-color: var(--team-sprout);
+      background: var(--team-sprout-soft);
+      transform: scale(1.1);
+    }
+    .team-select-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .team-select-pill {
+      border: 2px solid var(--paper-border);
+      border-radius: 16px;
+      padding: 16px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      background: #FFF;
+    }
+    .team-select-pill.sprout.selected { border-color: var(--team-sprout); background: var(--team-sprout-soft); }
+    .team-select-pill.amber.selected { border-color: var(--team-amber); background: var(--team-amber-soft); }
+
+    /* Arena TV Scoreboard */
+    .scale-score-display {
+      font-family: 'Fraunces', serif;
+      font-size: 58px;
+      font-weight: 900;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tug-stadium-card {
+      padding: 24px 30px;
+      margin-bottom: 18px;
+      background: linear-gradient(180deg, #FFFFFF 0%, #FAF8F2 100%);
+      overflow: hidden;
+    }
+    .tug-battlefield {
+      position: relative;
+      height: 170px;
+      background: #EFECE1;
+      border: 2px solid var(--paper-border);
+      border-radius: 20px;
+      margin: 18px 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .tug-center-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 4px;
+      background: #A39D87;
+      transform: translateX(-50%);
+      z-index: 10;
+    }
+    .tug-center-circle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px;
+      height: 60px;
+      border: 3px dashed #C3BCA7;
+      border-radius: 50%;
+      z-index: 9;
+      pointer-events: none;
+    }
+
+    /* Fixed centered Earth Globe in Tie scenario */
+    .tie-earth-globe {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 58px;
+      z-index: 28;
+      display: none;
+      line-height: 1;
+      text-align: center;
+      animation: earthGaze 3s infinite ease-in-out;
+    }
+
+    .tug-rig-assembly {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+      transform: translateX(0px);
+      z-index: 15;
+    }
+
+    .tug-rope-track {
+      position: absolute;
+      width: 1400px;
+      height: 16px;
+      background: repeating-linear-gradient(45deg, #A77E4D, #A77E4D 10px, #865E32 10px, #865E32 20px);
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+      transition: opacity 0.4s ease;
+    }
+    .tug-ribbon-marker {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 14px;
+      height: 38px;
+      background: #E02424;
+      border: 2px solid #FFF;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(224, 36, 36, 0.6);
+      z-index: 25;
+      animation: ribbonSway 0.6s infinite alternate ease-in-out;
+      transition: opacity 0.4s ease;
+    }
+
+    .tug-team-actors-left {
+      position: absolute;
+      right: calc(50% + 50px);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transform-origin: bottom center;
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .tug-team-actors-right {
+      position: absolute;
+      left: calc(50% + 50px);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transform-origin: bottom center;
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .tug-char-sprite {
+      font-size: 44px;
+      filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2));
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+    .pulling-left {
+      animation: pullStrainLeft 0.5s infinite alternate ease-in-out;
+    }
+    .pulling-right {
+      animation: pullStrainRight 0.5s infinite alternate ease-in-out;
+    }
+
+    .scale-bar-track-bottom {
+      height: 28px;
+      background: #E8E4D8;
+      border-radius: 16px;
+      border: 2px solid var(--paper-border);
+      display: flex;
+      position: relative;
+      overflow: hidden;
+    }
+    .scale-bar-sprout-bottom {
+      height: 100%;
+      background: var(--team-sprout);
+      width: 50%;
+      transition: width 0.35s ease;
+    }
+    .scale-bar-amber-bottom {
+      height: 100%;
+      background: var(--team-amber);
+      width: 50%;
+      transition: width 0.35s ease;
+    }
+
+    .member-score-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #FFF;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--paper-border);
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    @keyframes pullStrainLeft {
+      0% { transform: translateX(0) rotate(10deg); }
+      100% { transform: translateX(-12px) rotate(18deg); }
+    }
+    @keyframes pullStrainRight {
+      0% { transform: translateX(0) rotate(-10deg); }
+      100% { transform: translateX(12px) rotate(-18deg); }
+    }
+    @keyframes ribbonSway {
+      0% { transform: translate(-50%, -50%) rotate(-6deg); }
+      100% { transform: translate(-50%, -50%) rotate(6deg); }
+    }
+
+    @keyframes victoryCelebrate {
+      0% { transform: translateY(0) scale(1.1) rotate(0deg); }
+      25% { transform: translateY(-28px) scale(1.3) rotate(-14deg); }
+      50% { transform: translateY(0) scale(1.2) rotate(0deg); }
+      75% { transform: translateY(-34px) scale(1.35) rotate(14deg); }
+      100% { transform: translateY(0) scale(1.1) rotate(0deg); }
+    }
+
+    @keyframes victoryAura {
+      0%, 100% { filter: drop-shadow(0 0 14px rgba(234, 179, 8, 0.9)) drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
+      50% { filter: drop-shadow(0 0 28px rgba(34, 197, 94, 1)) drop-shadow(0 8px 12px rgba(0,0,0,0.4)); }
+    }
+
+    @keyframes dizzyDefeat {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      40% { transform: translateY(16px) rotate(-35deg); opacity: 0.8; }
+      70% { transform: translateY(28px) rotate(60deg) scale(0.9); opacity: 0.6; }
+      100% { transform: translateY(32px) rotate(90deg) scale(0.85); opacity: 0.5; }
+    }
+
+    @keyframes tieFriendship {
+      0%, 100% { transform: scale(1.15) translateY(0); }
+      50% { transform: scale(1.28) translateY(-14px); }
+    }
+    @keyframes earthGaze {
+      0%, 100% { transform: translate(-50%, -50%) scale(1) rotate(0deg); filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.95)); }
+      50% { transform: translate(-50%, -50%) scale(1.18) rotate(180deg); filter: drop-shadow(0 0 32px rgba(74, 222, 128, 1)); }
+    }
+
+    /* Client Gameplay View */
+    .client-screen-wrap {
+      max-width: 480px;
+      margin: auto;
+      padding: 16px;
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+    .client-header-bar {
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    /* Synced Gameplay Countdown Timer on Mobile */
+    .player-clock-chip {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      font-weight: 900;
+      color: var(--danger-alert);
+      background: #FDE8E8;
+      border: 1.5px solid #F8B4B4;
+      padding: 5px 12px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .streak-capsule {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--gold-accent);
+      background: #FEF3C7;
+      padding: 3px 10px;
+      border-radius: 99px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    .waste-card-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px 16px;
+      margin-bottom: 16px;
+      position: relative;
+    }
+    .waste-icon-stage {
+      font-size: 80px;
+      margin-bottom: 8px;
+      animation: floatWaste 2s infinite ease-in-out;
+      transition: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes floatWaste {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .waste-title-stage {
+      font-family: 'Fraunces', serif;
+      font-size: 22px;
+      font-weight: 800;
+      transition: opacity 0.2s ease;
+    }
+    .waste-desc-stage {
+      font-size: 13px;
+      color: var(--ink-muted);
+      margin-top: 4px;
+      max-width: 330px;
+      line-height: 1.4;
+      transition: opacity 0.2s ease;
+    }
+
+    /* 3D Waste Bins */
+    .three-bins-station-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: auto;
+      position: relative;
+    }
+    .bin-3d-module {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      outline: none;
+      transition: transform 0.15s ease;
+    }
+    .bin-3d-module:active {
+      transform: translateY(4px) scale(0.97);
+    }
+
+    .bin-3d-lid {
+      width: 94%;
+      height: 18px;
+      border-radius: 8px 8px 3px 3px;
+      position: relative;
+      box-shadow: 0 -2px 0 rgba(0,0,0,0.15) inset;
+      transition: transform 0.25s ease, background 0.2s ease;
+      z-index: 2;
+      transform-origin: bottom center;
+    }
+    .bin-3d-lid::after {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 26px;
+      height: 6px;
+      border-radius: 4px 4px 0 0;
+      background: rgba(0,0,0,0.25);
+    }
+    .bin-3d-body {
+      width: 100%;
+      min-height: 135px;
+      border-radius: 4px 4px 18px 18px;
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      color: #FFF;
+      box-shadow: 0 6px 0 rgba(0,0,0,0.2), inset 0 2px 4px rgba(255,255,255,0.2);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s ease;
+    }
+    .bin-3d-body::before {
+      content: '';
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      top: 50px;
+      bottom: 25px;
+      border-left: 2px solid rgba(255,255,255,0.15);
+      border-right: 2px solid rgba(255,255,255,0.15);
+      pointer-events: none;
+    }
+
+    .bin-3d-module.bin-open .bin-3d-lid {
+      transform: translateY(-12px) rotate(-18deg);
+    }
+    .bin-3d-module.bin-open .bin-3d-body {
+      animation: binJiggle 0.35s ease;
+    }
+
+    @keyframes binJiggle {
+      0%, 100% { transform: scale(1); }
+      40% { transform: scale(1.05) translateY(-4px); }
+      70% { transform: scale(0.97); }
+    }
+
+    .bin-module-organic .bin-3d-lid { background: var(--bin-organic-dark); }
+    .bin-module-organic .bin-3d-body { background: linear-gradient(180deg, var(--bin-organic) 0%, var(--bin-organic-dark) 100%); }
+
+    .bin-module-recycle .bin-3d-lid { background: var(--bin-recycle-dark); }
+    .bin-module-recycle .bin-3d-body { background: linear-gradient(180deg, var(--bin-recycle) 0%, var(--bin-recycle-dark) 100%); }
+
+    .bin-module-other .bin-3d-lid { background: var(--bin-other-dark); }
+    .bin-module-other .bin-3d-body { background: linear-gradient(180deg, var(--bin-other) 0%, var(--bin-other-dark) 100%); }
+
+    .bin-3d-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      font-weight: 900;
+      background: rgba(0,0,0,0.3);
+      padding: 2px 10px;
+      border-radius: 99px;
+      letter-spacing: 1px;
+    }
+    .bin-3d-icon {
+      font-size: 26px;
+      margin: 4px 0;
+    }
+    .bin-3d-name {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .bin-3d-desc {
+      font-size: 9.5px;
+      opacity: 0.85;
+      text-align: center;
+      line-height: 1.25;
+      margin-top: 4px;
+    }
+
+    /* Flying Waste Animation */
+    .flying-waste-clone {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      font-size: 60px;
+      transition: all 0.42s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transform-origin: center center;
+    }
+
+    /* Penalty & Theft Overlays */
+    .freeze-penalty-shield {
+      position: absolute;
+      inset: 0;
+      background: rgba(197, 48, 48, 0.94);
+      border-radius: 22px;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #FFF;
+      z-index: 50;
+      animation: shake 0.3s ease;
+    }
+
+    .theft-drain-banner {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      background: #DC2626;
+      color: #FFF;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 13px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+      z-index: 60;
+      animation: shake 0.4s ease;
+    }
+
+    .mystery-modal-shield {
+      position: fixed;
+      inset: 0;
+      background: rgba(25, 39, 29, 0.88);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+    .mystery-box-card {
+      max-width: 440px;
+      width: 100%;
+      padding: 28px 20px;
+      text-align: center;
+    }
+    .gift-boxes-flex {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .gift-box-btn {
+      background: #FAF8F2;
+      border: 2px dashed var(--paper-border);
+      border-radius: 16px;
+      padding: 20px 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .gift-box-btn:hover {
+      transform: translateY(-4px) scale(1.04);
+      border-color: var(--gold-accent);
+      background: #FFFBEB;
+    }
+    .gift-icon-anim {
+      font-size: 42px;
+      animation: pulse 1.5s infinite ease-in-out;
+    }
+    .reveal-alert-box {
+      display: none;
+      padding: 14px;
+      border-radius: 12px;
+      background: #FEF3C7;
+      border: 1px solid #FCD34D;
+      color: #92400E;
+      font-weight: 800;
+      font-size: 14px;
+      margin-top: 14px;
+    }
+
+    .victory-curtain {
+      position: fixed;
+      inset: 0;
+      background: rgba(25, 39, 29, 0.95);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      padding: 24px;
+      text-align: center;
+      color: #FFF;
+    }
+
+    .new-match-modal-card {
+      max-width: 460px;
+      width: 100%;
+      padding: 30px 24px;
+      text-align: center;
+    }
+
+    /* Local IP Helper Box under QR */
+    .qr-ip-config-box {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+    }
+    .qr-ip-input {
+      width: 88%;
+      padding: 6px 10px;
+      font-size: 11px;
+      border: 1px solid var(--paper-border);
+      border-radius: 8px;
+      text-align: center;
+      outline: none;
+      background: #FAF8F2;
+    }
+
+    @keyframes popZoom {
+      0% { transform: scale(0.65); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================= -->
+  <!-- TOP HEADER NAV (NO UNIT 3 CLASH & NO INSTANT SYNC TEXT)   -->
+  <!-- ========================================================= -->
+  <div class="top-header">
+    <div class="brand-group" id="secret-leaf-btn" title="Click 3 times to open Referee Gate">
+      <div class="brand-leaf-badge"><i class="fa-solid fa-leaf"></i></div>
+      <div class="brand-text-title">Green Living · 3-Bin Flow</div>
+    </div>
+    <div id="cloud-sync-indicator" style="font-size: 11px; font-weight: 700; color: #15803d; background: #dcfce7; padding: 4px 12px; border-radius: 99px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(34, 197, 94, 0.25);">
+      <span style="width: 7px; height: 7px; border-radius: 50%; background: #22c55e; display: inline-block;"></span> Cloud Realtime Ready
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 1. PLAYER PIN ENTRY SCREEN                                -->
+  <!-- ========================================================= -->
+  <div class="screen-view" id="view-player-portal" style="display: flex;">
+    <div class="portal-shell">
+      <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--team-sprout); background: var(--team-sprout-soft); padding: 5px 14px; border-radius: 99px; margin-bottom: 16px;">
+        <i class="fa-solid fa-seedling"></i> THE CANTEEN RUSH
+      </div>
+      <h1 class="font-serif" style="font-size: 38px; font-weight: 900; line-height: 1.15; margin-bottom: 12px;">Green Action Starts With Me</h1>
+      <p style="color: var(--ink-muted); font-size: 15px; line-height: 1.6; margin-bottom: 30px;">
+        Enter the Room PIN shown on the arena projector to sort waste into 3 bins and power up your tug of war team!
+      </p>
+
+      <div class="kraft-card" style="padding: 28px 24px;">
+        <input type="text" id="player-pin-input" class="pin-input-field font-mono" placeholder="ROOM PIN (E.G. ECO-8822)" maxlength="10">
+        <button class="btn-eco btn-eco-green" onclick="playerJoinLobby()">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> ENTER WAITING ROOM
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 2. REFEREE AUTHENTICATION MODAL                           -->
+  <!-- ========================================================= -->
+  <div class="modal-backdrop" id="referee-auth-modal">
+    <div class="kraft-card referee-box-card">
+      <div style="width: 52px; height: 52px; border-radius: 50%; background: var(--team-sprout-soft); color: var(--team-sprout); display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 16px auto;">
+        <i class="fa-solid fa-clipboard-check"></i>
+      </div>
+      <h2 style="font-family: 'Fraunces', serif; font-size: 22px; font-weight: 800; margin-bottom: 6px;">Referee Control Panel</h2>
+      <p style="color: var(--ink-muted); font-size: 13px; margin-bottom: 22px;">Enter Master Key (Default: <b>ADMIN888</b>) to host the match on the classroom screen.</p>
+      <input type="password" id="referee-pass-input" class="pin-input-field font-mono" placeholder="Enter Master Key..." style="font-size: 18px; letter-spacing: 2px;">
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-eco" style="background: #E8E2CD; color: var(--ink-forest); flex: 1;" onclick="closeRefereeAuthModal()">Close</button>
+        <button class="btn-eco btn-eco-green" style="flex: 1.5;" onclick="authenticateReferee()"><i class="fa-solid fa-key"></i> Open Arena</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 3. REFEREE ARENA LOBBY (TV PROJECTOR)                     -->
+  <!-- ========================================================= -->
+  <div class="screen-view" id="view-referee-lobby">
+    <div class="lobby-header-bar">
+      <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="width: 42px; height: 42px; border-radius: 12px; background: var(--team-sprout-soft); color: var(--team-sprout); display: flex; align-items: center; justify-content: center; font-size: 20px;">
+          <i class="fa-solid fa-chalkboard-user"></i>
+        </div>
+        <div>
+          <div style="font-family: 'Fraunces', serif; font-weight: 800; font-size: 19px;">3-Bin Tug of War Lobby</div>
+          <div style="font-size: 12px; color: var(--ink-muted);">Scan QR code or enter PIN to pick teams</div>
+        </div>
+      </div>
+
+      <!-- Match Duration Selector -->
+      <div class="duration-selector-wrap">
+        <span style="font-size: 12px; font-weight: 800; color: var(--ink-muted);"><i class="fa-regular fa-clock"></i> MATCH DURATION:</span>
+        <button class="time-chip-btn" onclick="setGameDuration(30)">30s</button>
+        <button class="time-chip-btn active" onclick="setGameDuration(60)">60s</button>
+        <button class="time-chip-btn" onclick="setGameDuration(90)">90s</button>
+        <button class="time-chip-btn" onclick="setGameDuration(120)">120s</button>
+        <button class="time-chip-btn" onclick="setGameDuration(180)">180s</button>
+      </div>
+
+      <div style="background: var(--paper-cream); border: 1.5px solid var(--paper-border); padding: 8px 18px; border-radius: 14px; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 12px; color: var(--ink-muted); font-weight: 800;">ROOM PIN:</span>
+        <span class="font-mono" id="stage-pin-text" style="font-size: 24px; font-weight: 900; color: var(--team-sprout); letter-spacing: 2px;">ECO-0000</span>
+      </div>
+
+      <button class="btn-eco btn-eco-green" style="width: auto; padding: 12px 28px;" onclick="refereeStartMatch()">
+        <i class="fa-solid fa-play"></i> START MATCH (<span id="ready-players-count">0</span> READY)
+      </button>
+    </div>
+
+    <div class="lobby-stage-layout">
+      <!-- QR Container with Instant Join Link -->
+      <div class="kraft-card" style="padding: 24px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <div style="font-weight: 800; font-size: 14px; color: var(--team-sprout);"><i class="fa-solid fa-qrcode"></i> SCAN QR TO JOIN DIRECTLY</div>
+        <div id="qrcode-target" style="background: #FFF; padding: 12px; border-radius: 14px; border: 1.5px solid var(--paper-border); margin: 14px 0 8px 0;"></div>
+        <div style="font-size: 12px; color: var(--ink-muted);">Scan to open room instantly without typing PIN</div>
+        
+        <div class="qr-ip-config-box" id="qr-ip-box" style="display: none;">
+          <span style="font-size: 10px; color: var(--ink-muted); font-weight: 700;">Host LAN IP (Wi-Fi):</span>
+          <input type="text" id="custom-ip-input" class="qr-ip-input" placeholder="e.g. 192.168.1.5:5500" onchange="updateQrEndpoint()">
+        </div>
+      </div>
+
+      <!-- Team 1 Roster -->
+      <div class="kraft-card roster-column-kraft sprout">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1.5px solid var(--paper-border);">
+          <span style="font-family: 'Fraunces', serif; font-weight: 800; font-size: 18px; color: var(--team-sprout);"><i class="fa-solid fa-seedling"></i> TEAM 1: GREEN SPROUT</span>
+          <span class="font-mono" id="lobby-sprout-cnt" style="font-weight: 900; color: var(--team-sprout); font-size: 17px;">0 players</span>
+        </div>
+        <div class="members-grid-box" id="lobby-sprout-roster"></div>
+      </div>
+
+      <!-- Team 2 Roster -->
+      <div class="kraft-card roster-column-kraft amber">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 12px; border-bottom: 1.5px solid var(--paper-border);">
+          <span style="font-family: 'Fraunces', serif; font-weight: 800; font-size: 18px; color: var(--team-amber);"><i class="fa-solid fa-sun-plant-wilt"></i> TEAM 2: MOTHER EARTH</span>
+          <span class="font-mono" id="lobby-amber-cnt" style="font-weight: 900; color: var(--team-amber); font-size: 17px;">0 players</span>
+        </div>
+        <div class="members-grid-box" id="lobby-amber-roster"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 4. PLAYER PROFILE SETUP (24 DIVERSE AVATARS)               -->
+  <!-- ========================================================= -->
+  <div class="screen-view" id="view-player-custom">
+    <div class="player-waiting-wrap">
+      <div class="kraft-card" style="padding: 26px 20px; text-align: center;">
+        <div style="font-size: 12px; color: var(--team-sprout); font-weight: 800; margin-bottom: 4px;" class="font-mono">
+          CURRENT ROOM: <span id="p-room-code-tag">ECO-0000</span>
+        </div>
+        <h2 style="font-family: 'Fraunces', serif; font-size: 26px; font-weight: 800; margin-bottom: 16px;">Player Green Profile</h2>
+
+        <div style="text-align: left; margin-bottom: 14px;">
+          <label style="font-size: 12px; font-weight: 800; color: var(--ink-muted);">YOUR NAME OR NICKNAME</label>
+          <input type="text" id="p-nickname" class="pin-input-field" placeholder="e.g. Alex - Group 1" style="font-size: 16px; letter-spacing: 0; padding: 13px; margin-top: 6px;">
+        </div>
+
+        <div style="text-align: left; margin-bottom: 14px;">
+          <label style="font-size: 12px; font-weight: 800; color: var(--ink-muted);">CHOOSE YOUR AVATAR (24 OPTIONS)</label>
+          <div class="avatar-grid-select" id="avatar-picker-grid">
+            <!-- Populated via script with 24 diverse eco avatars -->
+          </div>
+        </div>
+
+        <div style="text-align: left; margin-bottom: 22px;">
+          <label style="font-size: 12px; font-weight: 800; color: var(--ink-muted);">CHOOSE YOUR TUG OF WAR SIDE</label>
+          <div class="team-select-grid">
+            <div class="team-select-pill sprout selected" id="card-pick-t1" onclick="choosePlayerTeam('team1')">
+              <span style="font-size: 30px;">🌱</span>
+              <span style="font-weight: 800; font-size: 14px; color: var(--team-sprout);">Team 1: Green Sprout</span>
+              <span class="font-mono" id="p-cnt-t1" style="font-size: 11px; color: var(--ink-muted);">0 players</span>
+            </div>
+            <div class="team-select-pill amber" id="card-pick-t2" onclick="choosePlayerTeam('team2')">
+              <span style="font-size: 30px;">☀️</span>
+              <span style="font-weight: 800; font-size: 14px; color: var(--team-amber);">Team 2: Mother Earth</span>
+              <span class="font-mono" id="p-cnt-t2" style="font-size: 11px; color: var(--ink-muted);">0 players</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-eco btn-eco-green" id="btn-player-lock" onclick="togglePlayerReadyStatus()">
+          <i class="fa-solid fa-check"></i> I AM READY
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 5. REFEREE ARENA STAGE (LIVE TV SCOREBOARD)               -->
+  <!-- ========================================================= -->
+  <div class="screen-view" id="view-referee-stage">
+    <div class="lobby-header-bar">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <span style="font-family: 'Fraunces', serif; font-size: 20px; font-weight: 900; color: var(--ink-forest);">
+          <i class="fa-solid fa-people-pulling" style="color: var(--team-sprout);"></i> Live Tug of War Waste Clash
+        </span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="font-mono" id="stage-clock" style="font-size: 28px; font-weight: 900; color: var(--danger-alert); background: #FDE8E8; padding: 4px 18px; border-radius: 12px; border: 1.5px solid #F8B4B4;">
+          60s
+        </div>
+
+        <button class="btn-eco" id="referee-action-btn" style="width: auto; padding: 10px 22px; background: #E8E2CD; color: var(--ink-forest); font-weight: 800;" onclick="handleRefereePrimaryAction()">
+          <i class="fa-solid fa-flag-checkered"></i> Finish Match
+        </button>
+      </div>
+    </div>
+
+    <div style="flex: 1; padding: 24px 36px; display: flex; flex-direction: column; gap: 16px;">
+      <!-- ARENA LIVE TUG STADIUM -->
+      <div class="kraft-card tug-stadium-card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div style="font-size: 16px; font-weight: 800; color: var(--team-sprout); display: flex; align-items: center; gap: 8px;">
+              <i class="fa-solid fa-seedling"></i> TEAM 1: GREEN SPROUT (<span id="stage-t1-users">0</span> players)
+            </div>
+            <div class="scale-score-display" id="stage-t1-score" style="color: var(--team-sprout);">0</div>
+          </div>
+          <div style="text-align: center; color: var(--ink-muted); font-size: 12px; font-weight: 800;" class="font-mono">
+            LANDFILL DIVERTED ECO-SCORE
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 16px; font-weight: 800; color: var(--team-amber); display: flex; align-items: center; gap: 8px; justify-content: flex-end;">
+              TEAM 2: MOTHER EARTH (<span id="stage-t2-users">0</span> players) <i class="fa-solid fa-sun-plant-wilt"></i>
+            </div>
+            <div class="scale-score-display" id="stage-t2-score" style="color: var(--team-amber);">0</div>
+          </div>
+        </div>
+
+        <!-- MECHANICAL BATTLEFIELD -->
+        <div class="tug-battlefield" id="stadium-battlefield">
+          <div class="tug-center-line"></div>
+          <div class="tug-center-circle"></div>
+
+          <!-- Fixed centered Earth Globe in Tie scenario -->
+          <div class="tie-earth-globe" id="tie-earth-globe">🌍</div>
+
+          <!-- Realtime moving rope rig -->
+          <div class="tug-rig-assembly" id="tug-rig">
+            <div class="tug-rope-track" id="tug-rope"></div>
+            <div class="tug-ribbon-marker" id="tug-ribbon"></div>
+
+            <!-- Team 1 pullers -->
+            <div class="tug-team-actors-left" id="actors-team1">
+              <span class="tug-char-sprite pulling-left">🌱</span>
+              <span class="tug-char-sprite pulling-left">🪴</span>
+              <span class="tug-char-sprite pulling-left">🥑</span>
+              <span class="tug-char-sprite pulling-left">🍀</span>
+            </div>
+
+            <!-- Team 2 pullers -->
+            <div class="tug-team-actors-right" id="actors-team2">
+              <span class="tug-char-sprite pulling-right">☀️</span>
+              <span class="tug-char-sprite pulling-right">🐝</span>
+              <span class="tug-char-sprite pulling-right">🌻</span>
+              <span class="tug-char-sprite pulling-right">🥕</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tug of war ratio bar -->
+        <div class="scale-bar-track-bottom">
+          <div class="scale-bar-sprout-bottom" id="tug-bar-mint" style="width: 50%;"></div>
+          <div class="scale-bar-amber-bottom" id="tug-bar-orange" style="width: 50%;"></div>
+        </div>
+      </div>
+
+      <!-- MEMBER SCORE CONTRIBUTION LEADERBOARDS & STRATEGY FEED -->
+      <div style="flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; min-height: 0;">
+        <!-- Team 1 -->
+        <div class="kraft-card" style="padding: 18px; display: flex; flex-direction: column; border-top: 4px solid var(--team-sprout);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-size: 13px; font-weight: 800; color: var(--team-sprout);"><i class="fa-solid fa-trophy"></i> TEAM 1 CONTRIBUTIONS</div>
+            <div style="font-size: 11px; font-weight: 800; color: var(--ink-muted);">LIVE LEADERBOARD</div>
+          </div>
+          <div id="stage-t1-leaderboard" style="max-height: 110px; overflow-y: auto; margin-bottom: 10px;"></div>
+          <div style="font-size: 11px; font-weight: 800; color: var(--ink-muted); margin-bottom: 6px;">MATCH EVENTS FEED:</div>
+          <div id="stage-t1-feed" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;"></div>
+        </div>
+
+        <!-- Team 2 -->
+        <div class="kraft-card" style="padding: 18px; display: flex; flex-direction: column; border-top: 4px solid var(--team-amber);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="font-size: 13px; font-weight: 800; color: var(--team-amber);"><i class="fa-solid fa-trophy"></i> TEAM 2 CONTRIBUTIONS</div>
+            <div style="font-size: 11px; font-weight: 800; color: var(--ink-muted);">LIVE LEADERBOARD</div>
+          </div>
+          <div id="stage-t2-leaderboard" style="max-height: 110px; overflow-y: auto; margin-bottom: 10px;"></div>
+          <div style="font-size: 11px; font-weight: 800; color: var(--ink-muted); margin-bottom: 6px;">MATCH EVENTS FEED:</div>
+          <div id="stage-t2-feed" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 6. PLAYER CONTROLLER VIEW WITH 3D BINS & SYNC TIMER       -->
+  <!-- ========================================================= -->
+  <div class="screen-view" id="view-player-controller">
+    <div class="client-screen-wrap">
+      <!-- Stolen Points Alert Notification -->
+      <div class="theft-drain-banner" id="theft-drain-alert">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span id="theft-alert-text">POINTS STOLEN! -150 PTS DRAINED BY OPPONENT!</span>
+      </div>
+
+      <!-- Player Info Header with Countdown Clock -->
+      <div class="kraft-card client-header-bar">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 32px;" id="client-avatar-tag">🌱</span>
+          <div>
+            <div style="font-weight: 800; font-size: 15px;" id="client-name-tag">Player</div>
+            <div class="streak-capsule" id="client-streak-badge">
+              <i class="fa-solid fa-fire"></i> STREAK: 0/3
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Synchronized Match Clock for Players -->
+        <div class="player-clock-chip" id="client-clock-chip">
+          <i class="fa-regular fa-clock"></i> <span id="client-clock-tag">60s</span>
+        </div>
+
+        <div style="text-align: right;">
+          <div style="font-size: 10px; color: var(--ink-muted); font-weight: 800;">YOUR POINTS</div>
+          <div class="font-mono" id="client-score-tag" style="font-size: 22px; font-weight: 900; color: var(--team-sprout);">0</div>
+        </div>
+      </div>
+
+      <!-- Waste Card Presentation Area -->
+      <div class="kraft-card waste-card-area" id="waste-stage-card">
+        <div class="waste-icon-stage" id="client-item-icon">🍌</div>
+        <div class="waste-title-stage" id="client-item-name">Banana Peel</div>
+        <div class="waste-desc-stage" id="client-item-desc">Natural organic food waste from recess</div>
+
+        <!-- Penalty Freeze Shield -->
+        <div class="freeze-penalty-shield" id="freeze-penalty-box">
+          <div style="font-size: 40px; margin-bottom: 6px;">❄️</div>
+          <div style="font-weight: 900; font-size: 18px;" id="freeze-title-text">CONTAMINATION PENALTY! (-50 PTS)</div>
+          <div style="font-size: 12px; opacity: 0.95; margin-top: 4px;" id="freeze-desc-text">Sorting locked for 2 seconds</div>
+        </div>
+      </div>
+
+      <!-- 3D Waste Bins -->
+      <div class="three-bins-station-container">
+        <!-- BIN 01: ORGANIC -->
+        <button class="bin-3d-module bin-module-organic" id="bin-btn-organic" onclick="playerThrowWaste('organic')">
+          <div class="bin-3d-lid"></div>
+          <div class="bin-3d-body">
+            <span class="bin-3d-number">01</span>
+            <span class="bin-3d-icon">🌿</span>
+            <span class="bin-3d-name">ORGANIC</span>
+            <span class="bin-3d-desc">Food scraps, peels, yard clippings</span>
+          </div>
+        </button>
+
+        <!-- BIN 02: RECYCLABLE -->
+        <button class="bin-3d-module bin-module-recycle" id="bin-btn-recycle" onclick="playerThrowWaste('recycle')">
+          <div class="bin-3d-lid"></div>
+          <div class="bin-3d-body">
+            <span class="bin-3d-number">02</span>
+            <span class="bin-3d-icon">♻️</span>
+            <span class="bin-3d-name">RECYCLE</span>
+            <span class="bin-3d-desc">Clean PET, aluminium cans, dry boxes</span>
+          </div>
+        </button>
+
+        <!-- BIN 03: OTHER / RESIDUAL -->
+        <button class="bin-3d-module bin-module-other" id="bin-btn-other" onclick="playerThrowWaste('other')">
+          <div class="bin-3d-lid"></div>
+          <div class="bin-3d-body">
+            <span class="bin-3d-number">03</span>
+            <span class="bin-3d-icon">🗑️</span>
+            <span class="bin-3d-name">OTHER</span>
+            <span class="bin-3d-desc">Greasy boxes, plastic wrap, dirty cups</span>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 7. TACTICAL MYSTERY BOXES (DIVERSE REWARDS)               -->
+  <!-- ========================================================= -->
+  <div class="mystery-modal-shield" id="mystery-box-modal">
+    <div class="kraft-card mystery-box-card">
+      <div style="display: inline-block; background: #FEF3C7; color: #B45309; padding: 4px 14px; border-radius: 99px; font-weight: 800; font-size: 12px; margin-bottom: 8px;">
+        <i class="fa-solid fa-wand-magic-sparkles"></i> 3 IN A ROW STREAK!
+      </div>
+      <h3 style="font-family: 'Fraunces', serif; font-size: 24px; font-weight: 900; margin-bottom: 4px;">Pick A Tactical Power Box</h3>
+      <p style="color: var(--ink-muted); font-size: 13px;">Boost your team's rope pull or trap your opponents!</p>
+
+      <div class="gift-boxes-flex">
+        <button class="gift-box-btn" onclick="openMysteryBox(0)">
+          <div class="gift-icon-anim">📦</div>
+          <span style="font-weight: 800; font-size: 13px;">BOX #1</span>
+        </button>
+        <button class="gift-box-btn" onclick="openMysteryBox(1)">
+          <div class="gift-icon-anim">🎁</div>
+          <span style="font-weight: 800; font-size: 13px;">BOX #2</span>
+        </button>
+        <button class="gift-box-btn" onclick="openMysteryBox(2)">
+          <div class="gift-icon-anim">🏺</div>
+          <span style="font-weight: 800; font-size: 13px;">BOX #3</span>
+        </button>
+      </div>
+
+      <div class="reveal-alert-box" id="reveal-message"></div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 8. MATCH FINISH RESULT MODAL                              -->
+  <!-- ========================================================= -->
+  <div class="victory-curtain" id="match-result-modal">
+    <div style="font-size: 78px; margin-bottom: 12px;" id="result-trophy-icon">🏆</div>
+    <h2 style="font-family: 'Fraunces', serif; font-size: 42px; font-weight: 900; margin-bottom: 8px;" id="result-winner-title">TEAM 1 VICTORIOUS!</h2>
+    <p style="color: #D3DFCE; font-size: 16px; max-width: 520px; margin-bottom: 28px; line-height: 1.5;" id="result-winner-desc">
+      The winning team dragged their opponents across the center mark with superior sorting accuracy!
+    </p>
+    <div style="display: flex; gap: 14px;">
+      <button class="btn-eco btn-eco-green" style="width: auto; padding: 14px 30px;" onclick="openNewMatchSetupModal()">
+        <i class="fa-solid fa-play"></i> Start New Match
+      </button>
+      <button class="btn-eco" style="width: auto; padding: 14px 28px; background: #E8E2CD; color: var(--ink-forest);" onclick="closeResultModal()">
+        Close Panel
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- 9. NEW MATCH SETUP MODAL (CUSTOM DURATION & RESTART)       -->
+  <!-- ========================================================= -->
+  <div class="modal-backdrop" id="new-match-setup-modal">
+    <div class="kraft-card new-match-modal-card">
+      <div style="width: 54px; height: 54px; border-radius: 50%; background: var(--team-sprout-soft); color: var(--team-sprout); display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 16px auto;">
+        <i class="fa-solid fa-stopwatch"></i>
+      </div>
+      <h2 style="font-family: 'Fraunces', serif; font-size: 24px; font-weight: 900; margin-bottom: 6px;">Setup New Match Duration</h2>
+      <p style="color: var(--ink-muted); font-size: 13px; margin-bottom: 20px;">
+        Choose the clash timer for the upcoming round. All players and teams will remain in the room!
+      </p>
+
+      <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 24px;">
+        <button class="time-chip-btn new-round-time" onclick="selectNewRoundDuration(30, this)">30s</button>
+        <button class="time-chip-btn new-round-time active" onclick="selectNewRoundDuration(60, this)">60s</button>
+        <button class="time-chip-btn new-round-time" onclick="selectNewRoundDuration(90, this)">90s</button>
+        <button class="time-chip-btn new-round-time" onclick="selectNewRoundDuration(120, this)">120s</button>
+        <button class="time-chip-btn new-round-time" onclick="selectNewRoundDuration(180, this)">180s</button>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-eco" style="background: #E8E2CD; color: var(--ink-forest); flex: 1;" onclick="closeNewMatchSetupModal()">Cancel</button>
+        <button class="btn-eco btn-eco-green" style="flex: 1.6;" onclick="confirmAndLaunchNewMatch()">
+          <i class="fa-solid fa-bolt"></i> Launch Match!
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT GAMEPLAY ENGINE -->
+  <script>
+    const AVATARS_COLLECTION = [
+      '🌱', '🌿', '☘️', '🍀', '🪴', '🌴', 
+      '🌲', '🌳', '🍎', '🥑', '🥕', '🍉', 
+      '🍊', '🍋', '🐝', '🐞', '🦋', '🐢', 
+      '☕', '🌻', '🧴', '🥫', '📦', '♻️'
+    ];
+
+    const WASTE_ITEMS = [
+      // Organic Scraps
+      { name: "Banana Peel", desc: "Pure organic matter from lunch recess", icon: "🍌", bin: "organic" },
+      { name: "Apple Core", desc: "100% biodegradable fruit core", icon: "🍎", bin: "organic" },
+      { name: "Coffee Grounds & Tea Leaves", desc: "Rich in nitrogen, great for composting", icon: "☕", bin: "organic" },
+      { name: "Dry Campus Leaves", desc: "Natural garden debris ready for soil mulch", icon: "🍂", bin: "organic" },
+      { name: "Watermelon Rind", desc: "Moist organic fruit peel", icon: "🍉", bin: "organic" },
+      { name: "Leftover Cooked Rice", desc: "Canteen food waste without wrapping", icon: "🍚", bin: "organic" },
+      { name: "Crushed Eggshells", desc: "Calcium-rich natural composting element", icon: "🥚", bin: "organic" },
+
+      // Recyclables
+      { name: "Rinsed & Flattened PET Bottle", desc: "Clean bottle ready for shredding", icon: "🧴", bin: "recycle" },
+      { name: "Rinsed Aluminium Soda Can", desc: "Infinitely recyclable metal container", icon: "🥫", bin: "recycle" },
+      { name: "Flattened Cardboard Box", desc: "Dry, clean corrugated paper box", icon: "📦", bin: "recycle" },
+      { name: "Old Newspaper & Worksheets", desc: "Clean unsoiled paper pages", icon: "📰", bin: "recycle" },
+      { name: "Clean Glass Juice Bottle", desc: "Solid reusable glass vessel", icon: "🍾", bin: "recycle" },
+      { name: "Rinsed Milk & Juice Carton", desc: "Tetrapak paperboard carton without straw", icon: "🧃", bin: "recycle" },
+
+      // Residual / Other Trash
+      { name: "Greasy Styrofoam Lunchbox", desc: "Oily foam cannot be mechanically processed", icon: "🍱", bin: "other" },
+      { name: "Boba Cup With Fluid Left", desc: "Residual sweet tea contaminates recyclables", icon: "🧋", bin: "other" },
+      { name: "Used Sanitizing Wet Wipes", desc: "Contains microfibers and chemical solvents", icon: "🧻", bin: "other" },
+      { name: "Chili Sauce Sachet & Plastic Bag", desc: "Thin contaminated soft film plastic", icon: "🛍️", bin: "other" },
+      { name: "Single-Use Plastic Straw", desc: "Small brittle plastic difficult to reclaim", icon: "🥤", bin: "other" },
+      { name: "Used Surgical Medical Mask", desc: "Sanitary bio-risk residual waste", icon: "😷", bin: "other" },
+      { name: "Metallic Potato Chip Bag", desc: "Multi-layered foil polymer impossible to recycle", icon: "🍿", bin: "other" },
+      { name: "Seashells & Crab Claws", desc: "Dense mineral shell non-biodegradable in regular heaps", icon: "🦪", bin: "other" }
+    ];
+
+    // DIVERSE TACTICAL REWARDS LIST (10 VARIETIES)
+    const MYSTERY_REWARDS = [
+      { type: "BONUS_150", title: "🌟 TUG BURST", text: "Awards +150 tug points to your team!", sound: "bonus" },
+      { type: "BONUS_300", title: "🏆 MEGA TUG POWER", text: "Massive pull! Awards +300 tug points to your team!", sound: "bonus" },
+      { type: "MULTIPLIER_2X", title: "⚡ DOUBLE ENERGY (x2)", text: "Doubles points earned on your next waste throw!", sound: "power" },
+      { type: "MULTIPLIER_3X", title: "🔥 TRIPLE FORCE (x3)", text: "Triples points earned on your next waste throw!", sound: "power" },
+      { type: "ATTACK_FREEZE", title: "⚔️ FROST TRAP", text: "Freezes all members of the opposing team for 3 seconds!", sound: "attack" },
+      { type: "STEAL_POINTS", title: "🌪️ POINT VORTEX (DRAIN)", text: "Drains 150 tug points from the other team into yours!", sound: "steal" },
+      { type: "SHIELD_PROTECT", title: "🛡️ ECO SHIELD", text: "Grants 1 free mistake without contamination penalty!", sound: "power" },
+      { type: "INSTANT_STREAK", title: "🎯 QUICK CHARGE", text: "Immediately sets your combo streak to 2/3!", sound: "power" },
+      { type: "REVERSE_TIME", title: "⏳ OVERTIME CLOCK", text: "Adds +10 seconds to the match timer!", sound: "bonus" },
+      { type: "RISK_DIV_2", title: "⚠️ HAZARDOUS SPILL", text: "Contaminated residue halved your individual points!", sound: "hazard" }
+    ];
+
+    // Web Audio Synthesizer
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(freq, type = "sine", duration = 0.12) {
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+    function sndCorrect() { playTone(523.25, "sine", 0.08); setTimeout(() => playTone(783.99, "sine", 0.12), 70); }
+    function sndWrong() { playTone(180, "sawtooth", 0.25); }
+    function sndPowerup() { playTone(440, "triangle", 0.1); setTimeout(() => playTone(659.25, "triangle", 0.1), 80); setTimeout(() => playTone(880, "triangle", 0.2), 160); }
+    function sndDrainAlert() { playTone(240, "sawtooth", 0.18); setTimeout(() => playTone(160, "sawtooth", 0.25), 120); }
+
+    // =========================================================
+    // MULTI-DEVICE CLOUD REALTIME SYNC ENGINE (MQTT + BROADCAST)
+    // =========================================================
+    const CHANNEL_KEY = "green_living_tug_of_war_v5";
+    const syncChannel = new BroadcastChannel(CHANNEL_KEY);
+
+    let isHostReferee = false;
+    let mqttClient = null;
+    let currentMqttTopic = null;
+    let syncThrottleTimer = null;
+
+    const BROKER_URLS = [
+      "wss://broker.emqx.io:8084/mqtt",
+      "wss://broker.hivemq.com:8884/mqtt"
+    ];
+    let currentBrokerIdx = 0;
+
+    let arenaState = {
+      pin: "",
+      status: "IDLE",
+      gameDuration: 60,
+      timeLeft: 60,
+      team1: { score: 0, sorted: 0, penalty: 0, members: [] },
+      team2: { score: 0, sorted: 0, penalty: 0, members: [] }
+    };
+
+    let playerClient = {
+      id: "P_" + Math.random().toString(36).substr(2, 6),
+      name: "",
+      avatar: "🌱",
+      team: "team1",
+      ready: false,
+      score: 0,
+      streak: 0,
+      multiplier: 1,
+      hasShield: false
+    };
+
+    let activeWasteItem = null;
+    let stageTimerInterval = null;
+    let isFrozen = false;
+    let isThrowing = false;
+    let selectedNewDuration = 60;
+
+    function updateCloudStatus(status, text) {
+      const el = document.getElementById("cloud-sync-indicator");
+      if (!el) return;
+      if (status === "connected") {
+        el.style.background = "#dcfce7";
+        el.style.color = "#15803d";
+        el.innerHTML = `<span style="width:7px; height:7px; border-radius:50%; background:#22c55e; display:inline-block;"></span> ${text || "Cloud Realtime Active"}`;
+      } else if (status === "connecting") {
+        el.style.background = "#fef3c7";
+        el.style.color = "#b45309";
+        el.innerHTML = `<span style="width:7px; height:7px; border-radius:50%; background:#f59e0b; display:inline-block;"></span> Cloud Connecting...`;
+      } else {
+        el.style.background = "#fee2e2";
+        el.style.color = "#b91c1c";
+        el.innerHTML = `<span style="width:7px; height:7px; border-radius:50%; background:#ef4444; display:inline-block;"></span> Local Mode`;
+      }
+    }
+
+    function initCloudRoom(pin) {
+      if (!pin) return;
+      const cleanPin = pin.trim().toUpperCase();
+      const topic = `greenliving/arena/${cleanPin}/events`;
+
+      if (mqttClient && mqttClient.connected && currentMqttTopic === topic) {
+        return;
+      }
+
+      if (typeof mqtt === "undefined") {
+        console.warn("MQTT library not loaded, using local sync");
+        updateCloudStatus("local", "Local Mode");
+        return;
+      }
+
+      if (mqttClient) {
+        try { mqttClient.end(true); } catch(e) {}
+      }
+
+      updateCloudStatus("connecting");
+      const brokerUrl = BROKER_URLS[currentBrokerIdx];
+      const clientId = "client_" + Math.random().toString(36).substring(2, 10);
+
+      try {
+        mqttClient = mqtt.connect(brokerUrl, {
+          clientId: clientId,
+          clean: true,
+          connectTimeout: 8000,
+          reconnectPeriod: 3000,
+          keepalive: 30
+        });
+
+        mqttClient.on("connect", () => {
+          console.log(`[Cloud Sync] Connected to ${brokerUrl} for room ${cleanPin}`);
+          currentMqttTopic = topic;
+          updateCloudStatus("connected", `Room ${cleanPin} Online`);
+
+          mqttClient.subscribe(topic, { qos: 1 }, (err) => {
+            if (!err) {
+              if (isHostReferee) {
+                broadcast("SYNC_STATE", arenaState);
+              } else {
+                broadcast("REQUEST_STATE", {}, { requesterId: playerClient.id, pin: cleanPin });
+                if (playerClient.name) {
+                  broadcast("PLAYER_REGISTER", arenaState, { player: playerClient });
+                }
+              }
+            }
+          });
+        });
+
+        mqttClient.on("message", (recvTopic, msgBuffer) => {
+          try {
+            const raw = msgBuffer.toString();
+            const data = JSON.parse(raw);
+            if (data && data._senderId === playerClient.id) {
+              return;
+            }
+            handleIncomingSync(data.action, data.payload, data.extra);
+          } catch(err) {
+            console.error("[Cloud Sync] Parse error:", err);
+          }
+        });
+
+        mqttClient.on("error", (err) => {
+          console.warn("[Cloud Sync] Broker error:", err);
+          currentBrokerIdx = (currentBrokerIdx + 1) % BROKER_URLS.length;
+        });
+
+        mqttClient.on("offline", () => {
+          updateCloudStatus("connecting", "Reconnecting...");
+        });
+      } catch (err) {
+        console.warn("[Cloud Sync] Init error:", err);
+        updateCloudStatus("local", "Local Mode");
+      }
+    }
+
+    // Build the 24 Avatar Buttons
+    function initAvatarGrid() {
+      const grid = document.getElementById("avatar-picker-grid");
+      if (!grid) return;
+      grid.innerHTML = "";
+      AVATARS_COLLECTION.forEach((emoji, idx) => {
+        const btn = document.createElement("button");
+        btn.className = "avatar-pick-btn" + (idx === 0 ? " active" : "");
+        btn.innerText = emoji;
+        btn.onclick = () => pickPlayerAvatar(emoji);
+        grid.appendChild(btn);
+      });
+    }
+
+    // Incoming Event Router
+    function handleIncomingSync(action, payload, extra = {}) {
+      // 1. New player asks for current room state
+      if (action === "REQUEST_STATE") {
+        if (isHostReferee && arenaState.pin) {
+          broadcast("SYNC_STATE", arenaState);
+        }
+        return;
+      }
+
+      // 2. Player joins or updates profile/ready status
+      if (action === "PLAYER_REGISTER") {
+        const p = extra && extra.player ? extra.player : null;
+        if (p) {
+          if (isHostReferee) {
+            arenaState.team1.members = arenaState.team1.members.filter(m => m.id !== p.id);
+            arenaState.team2.members = arenaState.team2.members.filter(m => m.id !== p.id);
+            arenaState[p.team].members.push(p);
+            refreshUIRealtime();
+            broadcast("SYNC_STATE", arenaState);
+          } else {
+            arenaState.team1.members = arenaState.team1.members.filter(m => m.id !== p.id);
+            arenaState.team2.members = arenaState.team2.members.filter(m => m.id !== p.id);
+            arenaState[p.team].members.push(p);
+            refreshUIRealtime();
+          }
+        }
+        return;
+      }
+
+      // 3. Player throws waste and updates score
+      if (action === "PLAYER_SCORE_EVENT") {
+        if (isHostReferee && extra) {
+          const { playerId, teamKey, scoreDelta, sortedDelta, penaltyDelta, playerClient: pData, feedMsg, feedType } = extra;
+          if (arenaState[teamKey]) {
+            arenaState[teamKey].score = Math.max(0, arenaState[teamKey].score + (scoreDelta || 0));
+            if (sortedDelta) arenaState[teamKey].sorted += sortedDelta;
+            if (penaltyDelta) arenaState[teamKey].penalty += penaltyDelta;
+
+            const idx = arenaState[teamKey].members.findIndex(m => m.id === playerId);
+            if (idx !== -1 && pData) {
+              arenaState[teamKey].members[idx] = pData;
+            }
+          }
+          if (feedMsg) {
+            addStageFeedMsg(teamKey, feedMsg, feedType || "good");
+          }
+          updateTugStadiumLive();
+          renderTeamLeaderboards();
+          throttledBroadcastSync();
+        }
+        return;
+      }
+
+      // 4. Global match events
+      if (action === "SYNC_STATE") {
+        if (payload && payload.pin) {
+          if (!isHostReferee) {
+            arenaState = payload;
+            if (playerClient.name) {
+              const myTeam = playerClient.team;
+              const exists = arenaState[myTeam].members.some(m => m.id === playerClient.id);
+              if (!exists) {
+                arenaState[myTeam].members.push(playerClient);
+              }
+            }
+            refreshUIRealtime();
+          }
+        }
+      } else if (action === "TIME_TICK") {
+        arenaState.timeLeft = extra.timeLeft;
+        updateBothTimers(extra.timeLeft);
+      } else if (action === "START_MATCH") {
+        arenaState = payload;
+        triggerGameStart();
+      } else if (action === "END_MATCH") {
+        arenaState = payload;
+        triggerGameFinish();
+      } else if (action === "RESET_MATCH") {
+        arenaState = payload;
+        handleResetEvent();
+      } else if (action === "ATTACK_TRIGGER" && playerClient.name && playerClient.team === extra.targetTeam) {
+        triggerAttackedFreeze(extra.attackerName);
+      } else if (action === "STEAL_TRIGGER" && playerClient.name && playerClient.team === extra.victimTeam) {
+        triggerVictimDrainAlert(extra.thiefName, extra.stolenAmount);
+      }
+    }
+
+    syncChannel.onmessage = (e) => {
+      const { action, payload, extra } = e.data;
+      handleIncomingSync(action, payload, extra);
+    };
+
+    window.addEventListener("storage", (e) => {
+      if (e.key === CHANNEL_KEY && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          handleIncomingSync(parsed.action, parsed.payload, parsed.extra);
+        } catch (err) {}
+      }
+    });
+
+    function broadcast(action, payload = arenaState, extra = {}) {
+      const packet = {
+        action,
+        payload,
+        extra,
+        _senderId: playerClient.id,
+        _ts: Date.now()
+      };
+
+      try {
+        syncChannel.postMessage(packet);
+      } catch (e) {}
+
+      try {
+        localStorage.setItem(CHANNEL_KEY, JSON.stringify(packet));
+      } catch (e) {}
+
+      if (mqttClient && mqttClient.connected && currentMqttTopic) {
+        try {
+          mqttClient.publish(currentMqttTopic, JSON.stringify(packet), { qos: 1 });
+        } catch (e) {
+          console.warn("[Cloud Sync] Publish failed:", e);
+        }
+      }
+    }
+
+    function throttledBroadcastSync() {
+      if (syncThrottleTimer) return;
+      syncThrottleTimer = setTimeout(() => {
+        syncThrottleTimer = null;
+        broadcast("SYNC_STATE", arenaState);
+      }, 250);
+    }
+
+    function updateBothTimers(seconds) {
+      const stageClock = document.getElementById("stage-clock");
+      if (stageClock) stageClock.innerText = `${seconds}s`;
+
+      const clientClockTag = document.getElementById("client-clock-tag");
+      if (clientClockTag) clientClockTag.innerText = `${seconds}s`;
+    }
+
+    // =========================================================
+    // REFEREE AUTHENTICATION & ROOM CONFIGURATION
+    // =========================================================
+    function openRefereeAuthModal() {
+      document.getElementById("referee-auth-modal").style.display = "flex";
+      const inp = document.getElementById("referee-pass-input");
+      inp.value = "";
+      inp.focus();
+    }
+    function closeRefereeAuthModal() {
+      document.getElementById("referee-auth-modal").style.display = "none";
+    }
+    window.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        openRefereeAuthModal();
+      }
+    });
+
+    let logoClickCount = 0;
+    let logoClickTimer = null;
+    document.getElementById("secret-leaf-btn").addEventListener("click", () => {
+      logoClickCount++;
+      clearTimeout(logoClickTimer);
+      if (logoClickCount >= 3) {
+        logoClickCount = 0;
+        openRefereeAuthModal();
+      } else {
+        logoClickTimer = setTimeout(() => { logoClickCount = 0; }, 800);
+      }
+    });
+
+    function authenticateReferee() {
+      const enteredPass = document.getElementById("referee-pass-input").value.trim().toUpperCase();
+      if (enteredPass !== "ADMIN888") {
+        alert("Invalid Master Key! (Default Key: ADMIN888)");
+        return;
+      }
+      closeRefereeAuthModal();
+      initRefereeArenaRoom();
+    }
+    document.getElementById("referee-pass-input").addEventListener("keypress", (e) => {
+      if (e.key === "Enter") authenticateReferee();
+    });
+
+    // Render Quick-Access Direct Join QR Code
+    function renderJoinQRCode(pin) {
+      const qrEl = document.getElementById("qrcode-target");
+      if (!qrEl) return;
+      qrEl.innerHTML = "";
+
+      let targetUrl = "";
+      if (window.location.protocol === "file:") {
+        document.getElementById("qr-ip-box").style.display = "flex";
+        const customIp = document.getElementById("custom-ip-input").value.trim();
+        targetUrl = customIp ? `http://${customIp}/?pin=${pin}` : `https://green-living-3bin.web.app/?pin=${pin}`;
+      } else {
+        targetUrl = `${window.location.origin}${window.location.pathname}?pin=${pin}`;
+      }
+
+      new QRCode(qrEl, {
+        text: targetUrl,
+        width: 175,
+        height: 175,
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+
+    function updateQrEndpoint() {
+      if (arenaState.pin) renderJoinQRCode(arenaState.pin);
+    }
+
+    function initRefereeArenaRoom() {
+      isHostReferee = true;
+      const pin = "ECO-" + Math.floor(1000 + Math.random() * 9000);
+      arenaState.pin = pin;
+      arenaState.status = "LOBBY";
+      arenaState.gameDuration = 60;
+      arenaState.timeLeft = 60;
+      arenaState.team1 = { score: 0, sorted: 0, penalty: 0, members: [] };
+      arenaState.team2 = { score: 0, sorted: 0, penalty: 0, members: [] };
+
+      hideAllScreens();
+      document.getElementById("view-referee-lobby").style.display = "flex";
+      document.getElementById("stage-pin-text").innerText = pin;
+
+      renderJoinQRCode(pin);
+      initCloudRoom(pin);
+      broadcast("SYNC_STATE");
+    }
+
+    function setGameDuration(seconds) {
+      arenaState.gameDuration = seconds;
+      arenaState.timeLeft = seconds;
+      document.querySelectorAll(".time-chip-btn").forEach(b => {
+        b.classList.toggle("active", b.innerText === `${seconds}s`);
+      });
+      broadcast("SYNC_STATE");
+    }
+
+    // =========================================================
+    // PLAYER REGISTRATION & TEAM SELECTION
+    // =========================================================
+    function playerJoinLobby() {
+      const enteredPin = document.getElementById("player-pin-input").value.trim().toUpperCase();
+      if (!enteredPin) {
+        alert("Please enter the room PIN!");
+        return;
+      }
+      arenaState.pin = enteredPin;
+      initCloudRoom(enteredPin);
+
+      if (!playerClient.name) {
+        playerClient.name = "Green Friend " + Math.floor(Math.random() * 89 + 10);
+      }
+      document.getElementById("p-nickname").value = playerClient.name;
+      document.getElementById("p-room-code-tag").innerText = enteredPin;
+
+      hideAllScreens();
+      document.getElementById("view-player-custom").style.display = "flex";
+      initAvatarGrid();
+      registerPlayerState();
+    }
+
+    function pickPlayerAvatar(emoji) {
+      playerClient.avatar = emoji;
+      document.querySelectorAll(".avatar-pick-btn").forEach(b => b.classList.toggle("active", b.innerText === emoji));
+      registerPlayerState();
+    }
+
+    function choosePlayerTeam(teamKey) {
+      playerClient.team = teamKey;
+      document.getElementById("card-pick-t1").classList.toggle("selected", teamKey === "team1");
+      document.getElementById("card-pick-t2").classList.toggle("selected", teamKey === "team2");
+      registerPlayerState();
+    }
+
+    function togglePlayerReadyStatus() {
+      const name = document.getElementById("p-nickname").value.trim();
+      if (!name) {
+        alert("Please enter your name or nickname!");
+        return;
+      }
+      playerClient.name = name;
+      playerClient.ready = !playerClient.ready;
+
+      const btn = document.getElementById("btn-player-lock");
+      if (playerClient.ready) {
+        btn.style.background = "#235F2B";
+        btn.innerHTML = `<i class="fa-solid fa-circle-check"></i> READY (WAITING FOR LAUNCH)`;
+      } else {
+        btn.style.background = "var(--team-sprout)";
+        btn.innerHTML = `<i class="fa-solid fa-check"></i> I AM READY`;
+      }
+      registerPlayerState();
+    }
+
+    function registerPlayerState() {
+      arenaState.team1.members = arenaState.team1.members.filter(m => m.id !== playerClient.id);
+      arenaState.team2.members = arenaState.team2.members.filter(m => m.id !== playerClient.id);
+      arenaState[playerClient.team].members.push(playerClient);
+      broadcast("PLAYER_REGISTER", arenaState, { player: playerClient });
+      refreshUIRealtime();
+    }
+
+    // =========================================================
+    // REALTIME UI RENDERING & CONTRIBUTIONS LEADERBOARD
+    // =========================================================
+    function refreshUIRealtime() {
+      const t1Box = document.getElementById("lobby-sprout-roster");
+      const t2Box = document.getElementById("lobby-amber-roster");
+      if (t1Box && t2Box) {
+        t1Box.innerHTML = "";
+        t2Box.innerHTML = "";
+        arenaState.team1.members.forEach(m => t1Box.appendChild(createBotanicalChip(m, "var(--team-sprout)")));
+        arenaState.team2.members.forEach(m => t2Box.appendChild(createBotanicalChip(m, "var(--team-amber)")));
+
+        document.getElementById("lobby-sprout-cnt").innerText = `${arenaState.team1.members.length} players`;
+        document.getElementById("lobby-amber-cnt").innerText = `${arenaState.team2.members.length} players`;
+
+        const totalReady = [...arenaState.team1.members, ...arenaState.team2.members].filter(m => m.ready).length;
+        document.getElementById("ready-players-count").innerText = totalReady;
+      }
+
+      const cnt1 = document.getElementById("p-cnt-t1");
+      const cnt2 = document.getElementById("p-cnt-t2");
+      if (cnt1 && cnt2) {
+        cnt1.innerText = `${arenaState.team1.members.length} players`;
+        cnt2.innerText = `${arenaState.team2.members.length} players`;
+      }
+
+      if (document.getElementById("view-referee-stage").style.display === "flex") {
+        updateTugStadiumLive();
+        renderTeamLeaderboards();
+      }
+    }
+
+    function createBotanicalChip(m, borderColor) {
+      const chip = document.createElement("div");
+      chip.className = "member-botanical-chip";
+      chip.innerHTML = `
+        <div style="font-size:26px; width:46px; height:46px; border-radius:50%; background:#FFF; border:1.5px solid ${borderColor}; display:flex; align-items:center; justify-content:center;">${m.avatar || '🌱'}</div>
+        <div style="font-size:13px; font-weight:700; max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${m.name}</div>
+        <span style="font-size:10px; font-weight:800; color:${m.ready ? 'var(--team-sprout)' : 'var(--ink-muted)'};">${m.ready ? '● READY' : '○ WAITING...'}</span>
+      `;
+      return chip;
+    }
+
+    function renderTeamLeaderboards() {
+      const t1Lb = document.getElementById("stage-t1-leaderboard");
+      const t2Lb = document.getElementById("stage-t2-leaderboard");
+      if (!t1Lb || !t2Lb) return;
+
+      const sortedT1 = [...arenaState.team1.members].sort((a, b) => (b.score || 0) - (a.score || 0));
+      const sortedT2 = [...arenaState.team2.members].sort((a, b) => (b.score || 0) - (a.score || 0));
+
+      t1Lb.innerHTML = sortedT1.length ? sortedT1.map((m, idx) => `
+        <div class="member-score-row">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:12px; font-weight:900; color:var(--team-sprout); width:16px;">#${idx+1}</span>
+            <span>${m.avatar || '🌱'}</span>
+            <span style="font-weight:700;">${m.name}</span>
+          </div>
+          <span class="font-mono" style="font-weight:900; color:var(--team-sprout);">${m.score || 0} pts</span>
+        </div>
+      `).join("") : `<div style="font-size:12px; color:var(--ink-muted); text-align:center; padding:8px;">No players joined yet</div>`;
+
+      t2Lb.innerHTML = sortedT2.length ? sortedT2.map((m, idx) => `
+        <div class="member-score-row">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:12px; font-weight:900; color:var(--team-amber); width:16px;">#${idx+1}</span>
+            <span>${m.avatar || '☀️'}</span>
+            <span style="font-weight:700;">${m.name}</span>
+          </div>
+          <span class="font-mono" style="font-weight:900; color:var(--team-amber);">${m.score || 0} pts</span>
+        </div>
+      `).join("") : `<div style="font-size:12px; color:var(--ink-muted); text-align:center; padding:8px;">No players joined yet</div>`;
+    }
+
+    function updateTugStadiumLive() {
+      document.getElementById("stage-t1-score").innerText = arenaState.team1.score;
+      document.getElementById("stage-t2-score").innerText = arenaState.team2.score;
+      document.getElementById("stage-t1-users").innerText = arenaState.team1.members.length;
+      document.getElementById("stage-t2-users").innerText = arenaState.team2.members.length;
+
+      if (arenaState.status === "PLAYING") {
+        const diff = arenaState.team1.score - arenaState.team2.score;
+        const maxOffset = 260;
+        let targetTranslateX = Math.max(-maxOffset, Math.min(maxOffset, -(diff / 100) * 35));
+
+        const rig = document.getElementById("tug-rig");
+        if (rig) {
+          rig.style.transform = `translateX(${targetTranslateX}px)`;
+        }
+      }
+
+      const total = arenaState.team1.score + arenaState.team2.score;
+      let ratio1 = 50, ratio2 = 50;
+      if (total > 0) {
+        ratio1 = Math.round((arenaState.team1.score / total) * 100);
+        ratio2 = 100 - ratio1;
+      }
+      document.getElementById("tug-bar-mint").style.width = `${ratio1}%`;
+      document.getElementById("tug-bar-orange").style.width = `${ratio2}%`;
+    }
+
+    // =========================================================
+    // DYNAMIC REFEREE BUTTON LOGIC: FINISH MATCH <-> NEW MATCH
+    // =========================================================
+    function handleRefereePrimaryAction() {
+      if (arenaState.status === "PLAYING") {
+        refereeEndMatch();
+      } else {
+        openNewMatchSetupModal();
+      }
+    }
+
+    function setRefereeButtonState(state) {
+      const btn = document.getElementById("referee-action-btn");
+      if (!btn) return;
+      if (state === "FINISHED") {
+        btn.innerHTML = `<i class="fa-solid fa-rotate-left"></i> New Match`;
+        btn.style.background = "var(--team-sprout)";
+        btn.style.color = "#FFF";
+      } else {
+        btn.innerHTML = `<i class="fa-solid fa-flag-checkered"></i> Finish Match`;
+        btn.style.background = "#E8E2CD";
+        btn.style.color = "var(--ink-forest)";
+      }
+    }
+
+    function openNewMatchSetupModal() {
+      selectedNewDuration = arenaState.gameDuration || 60;
+      document.querySelectorAll(".new-round-time").forEach(b => {
+        b.classList.toggle("active", b.innerText === `${selectedNewDuration}s`);
+      });
+      document.getElementById("new-match-setup-modal").style.display = "flex";
+    }
+
+    function closeNewMatchSetupModal() {
+      document.getElementById("new-match-setup-modal").style.display = "none";
+    }
+
+    function selectNewRoundDuration(secs, btnEl) {
+      selectedNewDuration = secs;
+      document.querySelectorAll(".new-round-time").forEach(b => b.classList.remove("active"));
+      btnEl.classList.add("active");
+    }
+
+    function confirmAndLaunchNewMatch() {
+      closeNewMatchSetupModal();
+      closeResultModal();
+      arenaState.gameDuration = selectedNewDuration;
+      refereeResetMatch();
+    }
+
+    // =========================================================
+    // MATCH CONTROLS & RESTART ENGINE
+    // =========================================================
+    function refereeStartMatch() {
+      const total = arenaState.team1.members.length + arenaState.team2.members.length;
+      if (total === 0) {
+        alert("No players have joined the arena yet!");
+        return;
+      }
+      arenaState.status = "PLAYING";
+      arenaState.timeLeft = arenaState.gameDuration || 60;
+      broadcast("START_MATCH", arenaState);
+      triggerGameStart();
+    }
+
+    function triggerGameStart() {
+      hideAllScreens();
+      setRefereeButtonState("PLAYING");
+
+      // Reset stadium battlefield visual state
+      const tieGlobe = document.getElementById("tie-earth-globe");
+      if (tieGlobe) tieGlobe.style.display = "none";
+      document.getElementById("tug-rope").style.opacity = "1";
+      document.getElementById("tug-ribbon").style.opacity = "1";
+
+      updateBothTimers(arenaState.timeLeft);
+
+      if (playerClient.name) {
+        document.getElementById("view-player-controller").style.display = "flex";
+        document.getElementById("client-avatar-tag").innerText = playerClient.avatar;
+        document.getElementById("client-name-tag").innerText = playerClient.name;
+        playerClient.streak = 0;
+        playerClient.multiplier = 1;
+        playerClient.hasShield = false;
+        updateClientStreakDisplay();
+        nextWasteItem();
+      } else {
+        document.getElementById("view-referee-stage").style.display = "flex";
+        updateTugStadiumLive();
+        renderTeamLeaderboards();
+        startStageTimer();
+      }
+    }
+
+    function startStageTimer() {
+      clearInterval(stageTimerInterval);
+      stageTimerInterval = setInterval(() => {
+        arenaState.timeLeft--;
+        updateBothTimers(arenaState.timeLeft);
+        broadcast("TIME_TICK", arenaState, { timeLeft: arenaState.timeLeft });
+
+        if (arenaState.timeLeft <= 0) {
+          refereeEndMatch();
+        }
+      }, 1000);
+    }
+
+    function refereeEndMatch() {
+      clearInterval(stageTimerInterval);
+      arenaState.status = "FINISHED";
+      setRefereeButtonState("FINISHED");
+      broadcast("END_MATCH", arenaState);
+      triggerGameFinish();
+    }
+
+    function refereeResetMatch() {
+      clearInterval(stageTimerInterval);
+      closeResultModal();
+
+      arenaState.status = "PLAYING";
+      arenaState.timeLeft = arenaState.gameDuration || 60;
+      arenaState.team1.score = 0;
+      arenaState.team1.sorted = 0;
+      arenaState.team1.penalty = 0;
+      arenaState.team2.score = 0;
+      arenaState.team2.sorted = 0;
+      arenaState.team2.penalty = 0;
+
+      arenaState.team1.members.forEach(m => m.score = 0);
+      arenaState.team2.members.forEach(m => m.score = 0);
+
+      broadcast("RESET_MATCH", arenaState);
+      handleResetEvent();
+    }
+
+    function handleResetEvent() {
+      playerClient.score = 0;
+      playerClient.streak = 0;
+      playerClient.multiplier = 1;
+      playerClient.hasShield = false;
+      const scoreTag = document.getElementById("client-score-tag");
+      if (scoreTag) scoreTag.innerText = "0";
+
+      const rig = document.getElementById("tug-rig");
+      if (rig) rig.style.transform = "translateX(0px)";
+
+      const actors1Box = document.getElementById("actors-team1");
+      const actors2Box = document.getElementById("actors-team2");
+      if (actors1Box) {
+        actors1Box.style.right = "calc(50% + 50px)";
+        actors1Box.style.animation = "none";
+      }
+      if (actors2Box) {
+        actors2Box.style.left = "calc(50% + 50px)";
+        actors2Box.style.animation = "none";
+      }
+
+      document.getElementById("actors-team1").innerHTML = `
+        <span class="tug-char-sprite pulling-left">🌱</span>
+        <span class="tug-char-sprite pulling-left">🪴</span>
+        <span class="tug-char-sprite pulling-left">🥑</span>
+        <span class="tug-char-sprite pulling-left">🍀</span>
+      `;
+      document.getElementById("actors-team2").innerHTML = `
+        <span class="tug-char-sprite pulling-right">☀️</span>
+        <span class="tug-char-sprite pulling-right">🐝</span>
+        <span class="tug-char-sprite pulling-right">🌻</span>
+        <span class="tug-char-sprite pulling-right">🥕</span>
+      `;
+
+      const feed1 = document.getElementById("stage-t1-feed");
+      const feed2 = document.getElementById("stage-t2-feed");
+      if (feed1) feed1.innerHTML = "";
+      if (feed2) feed2.innerHTML = "";
+
+      triggerGameStart();
+    }
+
+    // =========================================================
+    // SPECIAL CELEBRATIONS: VICTORY & CENTERED TIE
+    // =========================================================
+    function triggerGameFinish() {
+      setRefereeButtonState("FINISHED");
+
+      const rig = document.getElementById("tug-rig");
+      const actors1Box = document.getElementById("actors-team1");
+      const actors2Box = document.getElementById("actors-team2");
+      const actors1 = document.querySelectorAll("#actors-team1 .tug-char-sprite");
+      const actors2 = document.querySelectorAll("#actors-team2 .tug-char-sprite");
+      const tieGlobe = document.getElementById("tie-earth-globe");
+
+      const modal = document.getElementById("match-result-modal");
+      const title = document.getElementById("result-winner-title");
+      const desc = document.getElementById("result-winner-desc");
+      const icon = document.getElementById("result-trophy-icon");
+
+      if (arenaState.team1.score > arenaState.team2.score) {
+        if (rig) rig.style.transform = "translateX(-320px)";
+
+        actors1.forEach(a => {
+          a.style.animation = "victoryCelebrate 0.9s infinite ease-in-out, victoryAura 1.5s infinite alternate ease-in-out";
+        });
+        actors2.forEach(a => {
+          a.style.animation = "dizzyDefeat 1.2s forwards ease";
+        });
+
+        confetti({ particleCount: 180, spread: 100, origin: { x: 0.3, y: 0.55 }, colors: ['#22c55e', '#16a34a', '#86efac', '#facc15'] });
+        setTimeout(() => {
+          confetti({ particleCount: 120, angle: 60, spread: 55, origin: { x: 0.1, y: 0.6 } });
+        }, 400);
+
+        setTimeout(() => {
+          icon.innerText = "🌱";
+          title.innerText = "TEAM 1: GREEN SPROUT WINS!";
+          title.style.color = "var(--team-sprout-soft)";
+          desc.innerText = `Team 1 completely dragged their opponents past the boundary line with ${arenaState.team1.score} landfill-diverted points!`;
+          modal.style.display = "flex";
+        }, 1300);
+
+      } else if (arenaState.team2.score > arenaState.team1.score) {
+        if (rig) rig.style.transform = "translateX(320px)";
+
+        actors2.forEach(a => {
+          a.style.animation = "victoryCelebrate 0.9s infinite ease-in-out, victoryAura 1.5s infinite alternate ease-in-out";
+        });
+        actors1.forEach(a => {
+          a.style.animation = "dizzyDefeat 1.2s forwards ease";
+        });
+
+        confetti({ particleCount: 180, spread: 100, origin: { x: 0.7, y: 0.55 }, colors: ['#f97316', '#ea580c', '#fdba74', '#facc15'] });
+        setTimeout(() => {
+          confetti({ particleCount: 120, angle: 120, spread: 55, origin: { x: 0.9, y: 0.6 } });
+        }, 400);
+
+        setTimeout(() => {
+          icon.innerText = "☀️";
+          title.innerText = "TEAM 2: MOTHER EARTH WINS!";
+          title.style.color = "var(--team-amber-soft)";
+          desc.innerText = `Team 2 overpowered the clash with an astounding ${arenaState.team2.score} clean sorting score!`;
+          modal.style.display = "flex";
+        }, 1300);
+
+      } else {
+        // --- SPECIAL TIE: FIXED CENTERED GLOBE (NO OFFSET) ---
+        if (rig) rig.style.transform = "translateX(0px)";
+
+        document.getElementById("tug-rope").style.opacity = "0.2";
+        document.getElementById("tug-ribbon").style.opacity = "0";
+
+        actors1Box.style.right = "calc(50% + 55px)";
+        actors2Box.style.left = "calc(50% + 55px)";
+
+        actors1Box.innerHTML = `
+          <span class="tug-char-sprite" style="animation: tieFriendship 1s infinite alternate ease-in-out;">🌱</span>
+          <span class="tug-char-sprite" style="animation: tieFriendship 1s infinite alternate ease-in-out 0.2s;">💚</span>
+          <span class="tug-char-sprite" style="animation: tieFriendship 1s infinite alternate ease-in-out 0.4s;">🤝</span>
+        `;
+        actors2Box.innerHTML = `
+          <span class="tug-char-sprite" style="animation: tieFriendship 1s infinite alternate ease-in-out 0.1s;">🤝</span>
+          <span class="tug-char-sprite" style="animation: tieFriendship 1s infinite alternate ease-in-out 0.3s;">🧡</span>
+          <span class="tug-char-sprite" style="animation: tieFriendship 1s infinite alternate ease-in-out 0.5s;">☀️</span>
+        `;
+
+        if (tieGlobe) tieGlobe.style.display = "block";
+
+        confetti({ particleCount: 90, spread: 70, origin: { x: 0.4, y: 0.5 } });
+        confetti({ particleCount: 90, spread: 70, origin: { x: 0.6, y: 0.5 } });
+
+        setTimeout(() => {
+          icon.innerText = "🌍";
+          title.innerText = "IT'S A TIE: PLANET EARTH WINS!";
+          title.style.color = "#FEF3C7";
+          desc.innerText = "Both teams stood equally strong! By sorting clean together, both teams unified to protect our campus and global ecosystem!";
+          modal.style.display = "flex";
+        }, 1100);
+      }
+    }
+
+    function closeResultModal() {
+      document.getElementById("match-result-modal").style.display = "none";
+    }
+
+    // =========================================================
+    // GAMEPLAY & ANIMATION OF THROWING INTO BINS
+    // =========================================================
+    function nextWasteItem() {
+      activeWasteItem = WASTE_ITEMS[Math.floor(Math.random() * WASTE_ITEMS.length)];
+      const iconEl = document.getElementById("client-item-icon");
+      const nameEl = document.getElementById("client-item-name");
+      const descEl = document.getElementById("client-item-desc");
+
+      iconEl.innerText = activeWasteItem.icon;
+      nameEl.innerText = activeWasteItem.name;
+      descEl.innerText = activeWasteItem.desc;
+
+      iconEl.style.opacity = "1";
+      iconEl.style.transform = "scale(1)";
+    }
+
+    function animateWasteThrow(targetBinKey, callback) {
+      const sourceEl = document.getElementById("client-item-icon");
+      const targetBinBtn = document.getElementById(`bin-btn-${targetBinKey}`);
+      if (!sourceEl || !targetBinBtn) {
+        callback();
+        return;
+      }
+
+      const srcRect = sourceEl.getBoundingClientRect();
+      const targetRect = targetBinBtn.getBoundingClientRect();
+
+      const flyer = document.createElement("div");
+      flyer.className = "flying-waste-clone";
+      flyer.innerText = sourceEl.innerText;
+      flyer.style.left = `${srcRect.left + srcRect.width/2 - 30}px`;
+      flyer.style.top = `${srcRect.top + srcRect.height/2 - 30}px`;
+      document.body.appendChild(flyer);
+
+      sourceEl.style.opacity = "0.2";
+      targetBinBtn.classList.add("bin-open");
+
+      requestAnimationFrame(() => {
+        const destX = targetRect.left + targetRect.width / 2 - 30;
+        const destY = targetRect.top + 30;
+
+        flyer.style.left = `${destX}px`;
+        flyer.style.top = `${destY}px`;
+        flyer.style.transform = "scale(0.3) rotate(360deg)";
+        flyer.style.opacity = "0.2";
+      });
+
+      setTimeout(() => {
+        flyer.remove();
+        targetBinBtn.classList.remove("bin-open");
+        callback();
+      }, 420);
+    }
+
+    function playerThrowWaste(selectedBin) {
+      if (arenaState.status !== "PLAYING" || isFrozen || isThrowing) return;
+
+      isThrowing = true;
+      const isCorrect = (selectedBin === activeWasteItem.bin);
+      const teamKey = playerClient.team;
+
+      animateWasteThrow(selectedBin, () => {
+        isThrowing = false;
+        let scoreDelta = 0;
+        let sortedDelta = 0;
+        let penaltyDelta = 0;
+        let feedMsg = "";
+        let feedType = "good";
+
+        if (isCorrect) {
+          sndCorrect();
+          playerClient.streak++;
+          const baseScore = 100 * playerClient.multiplier;
+          playerClient.multiplier = 1;
+
+          playerClient.score += baseScore;
+          arenaState[teamKey].score += baseScore;
+          arenaState[teamKey].sorted++;
+          scoreDelta = baseScore;
+          sortedDelta = 1;
+
+          feedMsg = `<b>${playerClient.avatar} ${playerClient.name}</b> sorted correctly: +${baseScore} pts!`;
+          feedType = "good";
+          addStageFeedMsg(teamKey, feedMsg, "good");
+
+          if (playerClient.streak >= 3) {
+            playerClient.streak = 0;
+            updateClientStreakDisplay();
+            triggerMysteryBoxModal();
+          } else {
+            updateClientStreakDisplay();
+          }
+        } else {
+          // Check for active Eco Shield
+          if (playerClient.hasShield) {
+            playerClient.hasShield = false;
+            playTone(600, "triangle", 0.2);
+            addStageFeedMsg(teamKey, `🛡️ <b>${playerClient.name}</b> was protected by Eco Shield!`, "good");
+            updateClientStreakDisplay();
+            nextWasteItem();
+            return;
+          }
+
+          sndWrong();
+          playerClient.streak = 0;
+          playerClient.multiplier = 1;
+          const penalty = 50;
+          scoreDelta = -penalty;
+          penaltyDelta = 1;
+
+          playerClient.score = Math.max(0, playerClient.score - penalty);
+          arenaState[teamKey].score = Math.max(0, arenaState[teamKey].score - penalty);
+          arenaState[teamKey].penalty++;
+
+          feedMsg = `<b>${playerClient.avatar} ${playerClient.name}</b> contaminated bin: -50 pts!`;
+          feedType = "hazard";
+          addStageFeedMsg(teamKey, feedMsg, "hazard");
+
+          updateClientStreakDisplay();
+          triggerMistakeFreeze();
+        }
+
+        const idx = arenaState[teamKey].members.findIndex(m => m.id === playerClient.id);
+        if (idx !== -1) arenaState[teamKey].members[idx] = playerClient;
+
+        document.getElementById("client-score-tag").innerText = playerClient.score;
+
+        broadcast("PLAYER_SCORE_EVENT", arenaState, {
+          playerId: playerClient.id,
+          teamKey: teamKey,
+          scoreDelta: scoreDelta,
+          sortedDelta: sortedDelta,
+          penaltyDelta: penaltyDelta,
+          playerClient: playerClient,
+          feedMsg: feedMsg,
+          feedType: feedType
+        });
+
+        refreshUIRealtime();
+        nextWasteItem();
+      });
+    }
+
+    function updateClientStreakDisplay() {
+      const badge = document.getElementById("client-streak-badge");
+      badge.innerHTML = `<i class="fa-solid fa-fire"></i> STREAK: ${playerClient.streak}/3`;
+      if (playerClient.multiplier > 1) {
+        badge.innerHTML += ` <span style="color:#C96B20; font-weight:900;">(x${playerClient.multiplier})</span>`;
+      }
+      if (playerClient.hasShield) {
+        badge.innerHTML += ` <span style="color:#2563EB; font-weight:900;">(🛡️ SHIELD)</span>`;
+      }
+    }
+
+    function triggerMistakeFreeze() {
+      isFrozen = true;
+      const overlay = document.getElementById("freeze-penalty-box");
+      document.getElementById("freeze-title-text").innerText = "CONTAMINATION PENALTY! (-50 PTS)";
+      document.getElementById("freeze-desc-text").innerText = "Sorting locked for 2 seconds";
+      overlay.style.display = "flex";
+      setTimeout(() => {
+        overlay.style.display = "none";
+        isFrozen = false;
+      }, 2000);
+    }
+
+    function triggerAttackedFreeze(attacker) {
+      isFrozen = true;
+      const overlay = document.getElementById("freeze-penalty-box");
+      document.getElementById("freeze-title-text").innerText = `FROZEN BY ${attacker.toUpperCase()}!`;
+      document.getElementById("freeze-desc-text").innerText = "Your sorting panel is locked for 3 seconds!";
+      overlay.style.display = "flex";
+      setTimeout(() => {
+        overlay.style.display = "none";
+        isFrozen = false;
+      }, 3000);
+    }
+
+    function triggerVictimDrainAlert(thiefName, amount) {
+      sndDrainAlert();
+      playerClient.score = Math.max(0, playerClient.score - amount);
+      const scoreTag = document.getElementById("client-score-tag");
+      if (scoreTag) scoreTag.innerText = playerClient.score;
+
+      const banner = document.getElementById("theft-drain-alert");
+      const bannerText = document.getElementById("theft-alert-text");
+      bannerText.innerText = `POINTS DRAINED! -${amount} PTS STOLEN BY ${thiefName.toUpperCase()}!`;
+      banner.style.display = "flex";
+
+      setTimeout(() => {
+        banner.style.display = "none";
+      }, 2800);
+    }
+
+    // =========================================================
+    // DIVERSE TACTICAL MYSTERY BOXES LOGIC
+    // =========================================================
+    function triggerMysteryBoxModal() {
+      sndPowerup();
+      document.getElementById("reveal-message").style.display = "none";
+      document.getElementById("mystery-box-modal").style.display = "flex";
+    }
+
+    function openMysteryBox(boxIndex) {
+      const reward = MYSTERY_REWARDS[Math.floor(Math.random() * MYSTERY_REWARDS.length)];
+      const teamKey = playerClient.team;
+      const opponentTeamKey = (teamKey === "team1") ? "team2" : "team1";
+
+      const revealBox = document.getElementById("reveal-message");
+      revealBox.innerHTML = `<b>${reward.title}</b>: ${reward.text}`;
+      revealBox.style.display = "block";
+
+      if (reward.type === "BONUS_150") {
+        playerClient.score += 150;
+        arenaState[teamKey].score += 150;
+        addStageFeedMsg(teamKey, `🎁 <b>${playerClient.name}</b> opened box: +150 tug points!`, "good");
+      } else if (reward.type === "BONUS_300") {
+        playerClient.score += 300;
+        arenaState[teamKey].score += 300;
+        addStageFeedMsg(teamKey, `🏆 <b>${playerClient.name}</b> mega pull: +300 tug points!`, "good");
+      } else if (reward.type === "MULTIPLIER_2X") {
+        playerClient.multiplier = 2;
+        addStageFeedMsg(teamKey, `⚡ <b>${playerClient.name}</b> unlocked x2 multiplier!`, "good");
+      } else if (reward.type === "MULTIPLIER_3X") {
+        playerClient.multiplier = 3;
+        addStageFeedMsg(teamKey, `🔥 <b>${playerClient.name}</b> triggered x3 power burst!`, "good");
+      } else if (reward.type === "ATTACK_FREEZE") {
+        addStageFeedMsg(teamKey, `⚔️ <b>${playerClient.name}</b> cast frost trap on opponents!`, "attack");
+        broadcast("ATTACK_TRIGGER", arenaState, { targetTeam: opponentTeamKey, attackerName: playerClient.name });
+      } else if (reward.type === "STEAL_POINTS") {
+        const stolen = Math.min(arenaState[opponentTeamKey].score, 150) || 150;
+        arenaState[opponentTeamKey].score = Math.max(0, arenaState[opponentTeamKey].score - stolen);
+        arenaState[teamKey].score += stolen;
+        playerClient.score += stolen;
+
+        arenaState[opponentTeamKey].members.forEach(m => {
+          m.score = Math.max(0, (m.score || 0) - Math.round(stolen / Math.max(1, arenaState[opponentTeamKey].members.length)));
+        });
+
+        addStageFeedMsg(teamKey, `🌪️ <b>${playerClient.name}</b> stole +${stolen} pts from opponents!`, "attack");
+        addStageFeedMsg(opponentTeamKey, `⚠️ <b>${stolen} pts stolen</b> by ${playerClient.name}!`, "hazard");
+
+        broadcast("STEAL_TRIGGER", arenaState, { victimTeam: opponentTeamKey, thiefName: playerClient.name, stolenAmount: stolen });
+      } else if (reward.type === "SHIELD_PROTECT") {
+        playerClient.hasShield = true;
+        addStageFeedMsg(teamKey, `🛡️ <b>${playerClient.name}</b> gained an Eco Shield!`, "good");
+      } else if (reward.type === "INSTANT_STREAK") {
+        playerClient.streak = 2;
+        addStageFeedMsg(teamKey, `🎯 <b>${playerClient.name}</b> charged streak to 2/3!`, "good");
+      } else if (reward.type === "REVERSE_TIME") {
+        arenaState.timeLeft += 10;
+        updateBothTimers(arenaState.timeLeft);
+        addStageFeedMsg(teamKey, `⏳ <b>${playerClient.name}</b> added +10s to the clock!`, "good");
+        broadcast("TIME_TICK", arenaState, { timeLeft: arenaState.timeLeft });
+      } else if (reward.type === "RISK_DIV_2") {
+        playerClient.score = Math.floor(playerClient.score / 2);
+        addStageFeedMsg(teamKey, `⚠️ <b>${playerClient.name}</b> hit hazardous residue (/2 score)!`, "hazard");
+      }
+
+      document.getElementById("client-score-tag").innerText = playerClient.score;
+      updateClientStreakDisplay();
+
+      const idx = arenaState[teamKey].members.findIndex(m => m.id === playerClient.id);
+      if (idx !== -1) arenaState[teamKey].members[idx] = playerClient;
+
+      broadcast("SYNC_STATE");
+      refreshUIRealtime();
+
+      setTimeout(() => {
+        document.getElementById("mystery-box-modal").style.display = "none";
+        nextWasteItem();
+      }, 2000);
+    }
+
+    function addStageFeedMsg(teamKey, textHtml, typeClass) {
+      const feedId = (teamKey === "team1") ? "stage-t1-feed" : "stage-t2-feed";
+      const feed = document.getElementById(feedId);
+      if (!feed) return;
+      const pill = document.createElement("div");
+      pill.style.fontSize = "12px";
+      pill.style.padding = "7px 10px";
+      pill.style.borderRadius = "8px";
+      pill.style.background = "#FFF";
+      pill.style.border = "1px solid var(--paper-border)";
+      pill.style.display = "flex";
+      pill.style.justifyContent = "space-between";
+      pill.innerHTML = `<span>${textHtml}</span><span style="font-size:10px; color:var(--ink-muted);" class="font-mono">just now</span>`;
+      feed.prepend(pill);
+      if (feed.children.length > 5) feed.lastElementChild.remove();
+    }
+
+    function hideAllScreens() {
+      document.querySelectorAll(".screen-view").forEach(s => s.style.display = "none");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const params = new URLSearchParams(window.location.search);
+      const urlPin = params.get("pin");
+      const urlRole = params.get("role");
+
+      const nickEl = document.getElementById("p-nickname");
+      if (nickEl) {
+        nickEl.addEventListener("input", () => {
+          const val = nickEl.value.trim();
+          if (val) {
+            playerClient.name = val;
+            registerPlayerState();
+          }
+        });
+      }
+
+      if (urlRole === "referee") {
+        openRefereeAuthModal();
+      } else if (urlPin) {
+        document.getElementById("player-pin-input").value = urlPin;
+        playerJoinLobby();
+      }
+    });
+  </script>
+</body>
+</html>
